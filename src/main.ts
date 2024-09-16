@@ -49,6 +49,25 @@ export class Sketch {
     fragmentShader: fragment,
   });
 
+  // Raycaster
+  raycaster = new THREE.Raycaster();
+  pointer = new THREE.Vector2();
+
+  raycasterPlane = new THREE.Mesh(
+    new THREE.PlaneGeometry(100, 100),
+    new THREE.MeshBasicMaterial({
+      color: 0xff0000,
+      side: THREE.DoubleSide,
+    })
+  );
+
+  pointerSphere = new THREE.Mesh(
+    new THREE.SphereGeometry(0.05, 20, 20),
+    new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+    })
+  );
+
   constructor() {
     this.renderer.setClearColor(this.bgColor, 1);
     this.renderer.setPixelRatio(Math.max(window.devicePixelRatio, 2));
@@ -89,9 +108,26 @@ export class Sketch {
     window.addEventListener("resize", () => this.resize());
   }
 
-  addObjects() {}
+  addObjects() {
+    this.scene.add(this.pointerSphere);
+  }
 
-  mouseEvents() {}
+  mouseEvents() {
+    window.addEventListener("pointermove", ({ clientX, clientY }) => {
+      // calculate pointer position in normalized device coordinates
+      // (-1 to +1) for both components
+      this.pointer.x = (clientX / this.width) * 2 - 1;
+      this.pointer.y = -(clientY / this.height) * 2 + 1;
+
+      // update the picking ray with the camera and pointer position
+      this.raycaster.setFromCamera(this.pointer, this.camera);
+
+      const intersects = this.raycaster.intersectObjects([this.raycasterPlane]);
+      if (intersects.length > 0) {
+        this.pointerSphere.position.copy(intersects[0].point);
+      }
+    });
+  }
 }
 
 const sketch = new Sketch();
