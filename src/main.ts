@@ -4,6 +4,7 @@ import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls";
 
 import fragment from "./shaders/fragment.glsl";
+import fragmentFBO from "./shaders/fbo.glsl";
 import vertex from "./shaders/vertex.glsl";
 
 const width = window.innerWidth;
@@ -18,6 +19,12 @@ export class Sketch {
 
   scene = new THREE.Scene();
   renderer = new THREE.WebGLRenderer();
+  // A render target is a buffer where the video card
+  // draws pixels for a scene that is being rendered
+  // in the background. It is used in different effects,
+  // such as applying postprocessing to a rendered image
+  // before displaying it on the screen.
+  sourceTarget = new THREE.WebGLRenderTarget(width, height);
   camera = new THREE.PerspectiveCamera(
     /* The first attribute is the field of view.
        FOV is the extent of the scene that is seen on the display at any given moment.
@@ -29,7 +36,7 @@ export class Sketch {
     */
     width / height,
     /* The next two attributes are the near and far clipping plane.
-       What that means, is that objects further away from the camera 
+       What that means, is that objects further away from the camera
        than the value of far or closer than near won't be rendered
     */
     0.1,
@@ -43,11 +50,18 @@ export class Sketch {
     side: THREE.DoubleSide,
     uniforms: {
       uTime: { value: 0 },
-      uResolution: { value: new THREE.Vector2(width, height) },
+      uResolution: {
+        value: new THREE.Vector4(this.width, this.height, 1, 1),
+      },
     },
     vertexShader: vertex,
     fragmentShader: fragment,
   });
+
+  fboScene = new THREE.Scene();
+  fboCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+  fboMaterial: THREE.ShaderMaterial;
+  fboQuad: THREE.Mesh;
 
   // Raycaster
   raycaster = new THREE.Raycaster();
@@ -62,7 +76,7 @@ export class Sketch {
   );
 
   pointerSphere = new THREE.Mesh(
-    new THREE.SphereGeometry(0.05, 20, 20),
+    new THREE.SphereGeometry(0.03, 20, 20),
     new THREE.MeshBasicMaterial({
       color: 0xffffff,
     })
@@ -74,22 +88,48 @@ export class Sketch {
 
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
 
+    this.fboMaterial = new THREE.ShaderMaterial({
+      side: THREE.DoubleSide,
+      uniforms: {
+        tDiffuse: { value: this.sourceTarget.texture },
+        uResolution: {
+          value: new THREE.Vector4(this.width, this.height, 1, 1),
+        },
+      },
+      vertexShader: vertex,
+      fragmentShader: fragmentFBO,
+    });
+
+    this.fboQuad = new THREE.Mesh(
+      new THREE.PlaneGeometry(2, 2),
+      this.fboMaterial
+    );
+
+    this.fboScene.add(this.fboQuad);
+
     this.plane = new THREE.Mesh(this.geometry, this.material);
     this.scene.add(this.plane);
 
     document.body.append(this.renderer.domElement);
 
-    this.camera.position.set(0, 0, 2);
+    this.camera.position.set(0, 0, 1);
+    this.fboCamera.position.set(0, 0, 1);
 
     this.resize();
     this.setupResize();
+    this.setupPipeline();
     this.addObjects();
     this.renderer.setAnimationLoop(this.render);
     this.mouseEvents();
   }
 
   render = () => {
+    this.renderer.setRenderTarget(this.sourceTarget);
     this.renderer.render(this.scene, this.camera);
+
+    this.renderer.setRenderTarget(null);
+    // Plane with shader material which uses previous scene as a texture
+    this.renderer.render(this.fboScene, this.fboCamera);
   };
 
   resize() {
@@ -97,6 +137,9 @@ export class Sketch {
     this.height = window.innerHeight;
 
     this.material.uniforms.uResolution.value.set(width, height);
+
+    this.sourceTarget.width = this.width;
+    this.sourceTarget.height = this.height;
 
     this.camera.aspect = this.width / this.height;
     this.camera.updateProjectionMatrix();
@@ -108,7 +151,10 @@ export class Sketch {
     window.addEventListener("resize", () => this.resize());
   }
 
+  setupPipeline() {}
+
   addObjects() {
+    // this.scene.add(this.raycasterPlane);
     this.scene.add(this.pointerSphere);
   }
 
