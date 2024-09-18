@@ -9,4 +9,5 @@ void main() {
   vec4 color = texture2D(tDiffuse, vUv);
   vec4 prev = texture2D(tPrev, vUv);
   gl_FragColor = color + prev * 0.9;
+  gl_FragColor = prev;
 }

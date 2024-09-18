@@ -65,6 +65,18 @@ export class Sketch {
     fragmentShader: fragment,
   });
 
+  // TODO: use existing scenes and targets
+  bgTarget = new THREE.WebGLRenderTarget(width, height);
+  bgScene = new THREE.Scene();
+  bgSceneBg = new THREE.Mesh(
+    new THREE.PlaneGeometry(100, 100),
+    new THREE.MeshBasicMaterial({ color: 0xffffff })
+  );
+  box = new THREE.Mesh(
+    new THREE.BoxGeometry(0.4, 0.4, 0.4),
+    new THREE.MeshBasicMaterial({ color: 0x00ff00 })
+  );
+
   fboScene = new THREE.Scene();
   fboCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
   fboMaterial: THREE.ShaderMaterial;
@@ -99,13 +111,25 @@ export class Sketch {
     this.renderer.setClearColor(this.bgColor, 1);
     this.renderer.setPixelRatio(Math.max(window.devicePixelRatio, 2));
 
+    this.camera.position.set(0, 0, 1);
+    this.fboCamera.position.set(0, 0, 1);
+
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+
+    // Creats and render background
+    // TODO: possibly remove and use existing scenes and render targets
+    this.bgSceneBg.position.z = -1;
+    this.box.position.z = -0.5;
+    this.bgScene.add(this.bgSceneBg);
+    this.bgScene.add(this.box);
+    this.renderer.setRenderTarget(this.bgTarget);
+    this.renderer.render(this.bgScene, this.camera);
 
     this.fboMaterial = new THREE.ShaderMaterial({
       side: THREE.DoubleSide,
       uniforms: {
         tDiffuse: { value: null },
-        tPrev: { value: null },
+        tPrev: { value: this.bgTarget.texture },
         uResolution: {
           value: new THREE.Vector4(this.width, this.height, 1, 1),
         },
@@ -127,9 +151,6 @@ export class Sketch {
     this.finalScene.add(this.finalQuad);
 
     document.body.append(this.renderer.domElement);
-
-    this.camera.position.set(0, 0, 1);
-    this.fboCamera.position.set(0, 0, 1);
 
     this.resize();
     this.setupResize();
@@ -156,6 +177,7 @@ export class Sketch {
     // final output
     this.finalQuad.material.map = this.targetA.texture;
     this.renderer.setRenderTarget(null);
+
     // Plane with shader material which uses previous scene as a texture
     this.renderer.render(this.finalScene, this.fboCamera);
 
