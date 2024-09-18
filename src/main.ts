@@ -189,7 +189,7 @@ export class Sketch {
     this.width = window.innerWidth;
     this.height = window.innerHeight;
 
-    this.material.uniforms.uResolution.value.set(width, height);
+    this.material.uniforms.uResolution.value.set(width, height, 1, 1);
 
     this.sourceTarget.width = this.width;
     this.sourceTarget.height = this.height;

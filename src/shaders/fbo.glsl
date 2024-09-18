@@ -37,11 +37,41 @@ float fbm(vec2 x) {
 	return v;
 }
 
+// https://github.com/jamieowen/glsl-blend/blob/master/darken.glsl
+float blendDarken(float base, float blend) {
+	return min(blend,base);
+}
+
+vec3 blendDarken(vec3 base, vec3 blend) {
+	return vec3(blendDarken(base.r,blend.r),blendDarken(base.g,blend.g),blendDarken(base.b,blend.b));
+}
+
+vec3 blendDarken(vec3 base, vec3 blend, float opacity) {
+	return (blendDarken(base, blend) * opacity + base * (1.0 - opacity));
+}
+
+
+vec3 bgColor = vec3(1., 1., 1.);
 void main() {
   vec4 color = texture2D(tDiffuse, vUv); // mose movement
   vec4 prev = texture2D(tPrev, vUv); // previous frame
+  vec2 aspect = vec2(1., uResolution.y / uResolution.x);
 
-  float disp = fbm(vUv * 22.);
+  vec2 displacement = fbm(vUv * 22.) * aspect * 0.005;
+
+  vec4 texel = texture2D(tPrev, vUv);
+  vec4 texel2 = texture2D(tPrev, vec2(vUv.x + displacement.x, vUv.y));
+  vec4 texel3 = texture2D(tPrev, vec2(vUv.x - displacement.x, vUv.y));
+  vec4 texel4 = texture2D(tPrev, vec2(vUv.x, vUv.y + displacement.y));
+  vec4 texel5 = texture2D(tPrev, vec2(vUv.x, vUv.y - displacement.y));
+
+  vec3 watercolor = texel.rgb;
+  watercolor = blendDarken(watercolor, texel2.rgb);
+  watercolor = blendDarken(watercolor, texel3.rgb);
+  watercolor = blendDarken(watercolor, texel4.rgb);
+  watercolor = blendDarken(watercolor, texel5.rgb);
+
   gl_FragColor = color + prev * 0.9;
-  gl_FragColor = vec4(disp, 0., 0., 1.);
+  gl_FragColor = vec4(displacement, 0., 1.);
+  gl_FragColor = vec4(watercolor, 1.);
 }
