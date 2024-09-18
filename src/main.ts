@@ -130,6 +130,7 @@ export class Sketch {
       uniforms: {
         tDiffuse: { value: null },
         tPrev: { value: this.bgTarget.texture },
+        uTime: { value: 0 },
         uResolution: {
           value: new THREE.Vector4(this.width, this.height, 1, 1),
         },
@@ -167,6 +168,7 @@ export class Sketch {
 
     this.renderer.setRenderTarget(this.targetA);
     this.renderer.render(this.fboScene, this.fboCamera);
+    this.fboMaterial.uniforms.uTime.value += 0.05;
     this.fboMaterial.uniforms.tDiffuse.value = this.sourceTarget.texture;
     // 2. Save the rendered texture for use in the next step after swap
     //   2.1 In next render renderTarget will be this.targetB (after swap)
