@@ -95,7 +95,7 @@ vec3 bgColor = vec3(1., 1., 1.);
 void main() {
   vec4 color = texture2D(tDiffuse, vUv); // mose movement
   vec4 prev = texture2D(tPrev, vUv); // previous frame
-  vec2 aspect = vec2(1., uResolution.y / uResolution.x);
+  vec2 aspect = vec2(1., 1.);
 
   vec2 displacement = fbm(vUv * 22.) * aspect * 0.005;
 
@@ -111,13 +111,14 @@ void main() {
   floodcolor = blendDarken(floodcolor, texel4.rgb);
   floodcolor = blendDarken(floodcolor, texel5.rgb);
 
-  vec3 watercolor = blendDarken(prev.rgb, floodcolor * 1.05, 0.2);
+  vec3 watercolor = blendDarken(prev.rgb, floodcolor * 1.01, 0.35);
   vec3 gradient = hsl2rgb(vec3(fract(uTime * 0.1), 0.5, 0.5));
   vec3 lcolor = mix(vec3(1.), gradient, color.r);
+  vec3 finalColor = blendDarken(watercolor, lcolor, 0.5);
 
   gl_FragColor = color + prev * 0.9;
   gl_FragColor = vec4(displacement, 0., 1.);
   gl_FragColor = vec4(watercolor, 1.);
   gl_FragColor = vec4(gradient, 1.);
-  gl_FragColor = vec4(lcolor, 1.);
+  gl_FragColor = vec4(min(bgColor, finalColor * 1.01), 1.);
 }

@@ -101,7 +101,7 @@ export class Sketch {
   );
 
   pointerSphere = new THREE.Mesh(
-    new THREE.SphereGeometry(0.03, 20, 20),
+    new THREE.SphereGeometry(0.05, 20, 20),
     new THREE.MeshBasicMaterial({
       color: 0xffffff,
     })
@@ -121,7 +121,7 @@ export class Sketch {
     this.bgSceneBg.position.z = -1;
     this.box.position.z = -0.5;
     this.bgScene.add(this.bgSceneBg);
-    this.bgScene.add(this.box);
+    // this.bgScene.add(this.box);
     this.renderer.setRenderTarget(this.bgTarget);
     this.renderer.render(this.bgScene, this.camera);
 
