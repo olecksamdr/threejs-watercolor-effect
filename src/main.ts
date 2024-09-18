@@ -2,6 +2,7 @@ import * as THREE from "three";
 
 // @ts-ignore
 import { OrbitControls } from "three/addons/controls/OrbitControls";
+import Stats from "three/examples/jsm/libs/stats.module";
 
 import fragment from "./shaders/fragment.glsl";
 import fragmentFBO from "./shaders/fbo.glsl";
@@ -16,6 +17,7 @@ export class Sketch {
   height = window.innerHeight;
 
   controls: OrbitControls;
+  stats = Stats();
 
   scene = new THREE.Scene();
   renderer = new THREE.WebGLRenderer({
@@ -152,6 +154,7 @@ export class Sketch {
     this.finalScene.add(this.finalQuad);
 
     document.body.append(this.renderer.domElement);
+    document.body.append(this.stats.domElement);
 
     this.resize();
     this.setupResize();
@@ -162,6 +165,7 @@ export class Sketch {
   }
 
   render = () => {
+    this.stats.update();
     // 1. Render source scene
     this.renderer.setRenderTarget(this.sourceTarget);
     this.renderer.render(this.scene, this.camera);
