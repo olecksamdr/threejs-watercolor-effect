@@ -18,13 +18,20 @@ export class Sketch {
   controls: OrbitControls;
 
   scene = new THREE.Scene();
-  renderer = new THREE.WebGLRenderer();
+  renderer = new THREE.WebGLRenderer({
+    alpha: false,
+    antialias: true,
+  });
+  // TODO: naming
   // A render target is a buffer where the video card
   // draws pixels for a scene that is being rendered
   // in the background. It is used in different effects,
   // such as applying postprocessing to a rendered image
   // before displaying it on the screen.
   sourceTarget = new THREE.WebGLRenderTarget(width, height);
+  targetA = new THREE.WebGLRenderTarget(width, height);
+  targetB = new THREE.WebGLRenderTarget(width, height);
+
   camera = new THREE.PerspectiveCamera(
     /* The first attribute is the field of view.
        FOV is the extent of the scene that is seen on the display at any given moment.
@@ -43,7 +50,7 @@ export class Sketch {
     1000
   );
 
-  plane: THREE.Mesh;
+  // plane: THREE.Mesh;
   // PlaneGeometry(width : Float, height : Float, widthSegments : Integer, heightSegments : Integer)
   geometry = new THREE.PlaneGeometry(1, 1, 1, 1);
   material = new THREE.ShaderMaterial({
@@ -62,6 +69,12 @@ export class Sketch {
   fboCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
   fboMaterial: THREE.ShaderMaterial;
   fboQuad: THREE.Mesh;
+
+  finalScene = new THREE.Scene();
+  finalQuad = new THREE.Mesh(
+    new THREE.PlaneGeometry(2, 2),
+    new THREE.MeshBasicMaterial({ map: null })
+  );
 
   // Raycaster
   raycaster = new THREE.Raycaster();
@@ -91,7 +104,8 @@ export class Sketch {
     this.fboMaterial = new THREE.ShaderMaterial({
       side: THREE.DoubleSide,
       uniforms: {
-        tDiffuse: { value: this.sourceTarget.texture },
+        tDiffuse: { value: null },
+        tPrev: { value: null },
         uResolution: {
           value: new THREE.Vector4(this.width, this.height, 1, 1),
         },
@@ -107,8 +121,10 @@ export class Sketch {
 
     this.fboScene.add(this.fboQuad);
 
-    this.plane = new THREE.Mesh(this.geometry, this.material);
-    this.scene.add(this.plane);
+    // this.plane = new THREE.Mesh(this.geometry, this.material);
+    // this.scene.add(this.plane);
+
+    this.finalScene.add(this.finalQuad);
 
     document.body.append(this.renderer.domElement);
 
@@ -124,12 +140,27 @@ export class Sketch {
   }
 
   render = () => {
+    // 1. Render source scene
     this.renderer.setRenderTarget(this.sourceTarget);
     this.renderer.render(this.scene, this.camera);
 
+    this.renderer.setRenderTarget(this.targetA);
+    this.renderer.render(this.fboScene, this.fboCamera);
+    this.fboMaterial.uniforms.tDiffuse.value = this.sourceTarget.texture;
+    // 2. Save the rendered texture for use in the next step after swap
+    //   2.1 In next render renderTarget will be this.targetB (after swap)
+    //       tDiffues will be texture from source
+    //       tPrev will be saved previous texture
+    this.fboMaterial.uniforms.tPrev.value = this.targetA.texture;
+
+    // final output
+    this.finalQuad.material.map = this.targetA.texture;
     this.renderer.setRenderTarget(null);
     // Plane with shader material which uses previous scene as a texture
-    this.renderer.render(this.fboScene, this.fboCamera);
+    this.renderer.render(this.finalScene, this.fboCamera);
+
+    // swap
+    [this.targetA, this.targetB] = [this.targetB, this.targetA];
   };
 
   resize() {
