@@ -65,11 +65,13 @@ void main() {
   vec4 texel4 = texture2D(tPrev, vec2(vUv.x, vUv.y + displacement.y));
   vec4 texel5 = texture2D(tPrev, vec2(vUv.x, vUv.y - displacement.y));
 
-  vec3 watercolor = texel.rgb;
-  watercolor = blendDarken(watercolor, texel2.rgb);
-  watercolor = blendDarken(watercolor, texel3.rgb);
-  watercolor = blendDarken(watercolor, texel4.rgb);
-  watercolor = blendDarken(watercolor, texel5.rgb);
+  vec3 floodcolor = texel.rgb;
+  floodcolor = blendDarken(floodcolor, texel2.rgb);
+  floodcolor = blendDarken(floodcolor, texel3.rgb);
+  floodcolor = blendDarken(floodcolor, texel4.rgb);
+  floodcolor = blendDarken(floodcolor, texel5.rgb);
+
+  vec3 watercolor = blendDarken(prev.rgb, floodcolor* 1.05, 0.2);
 
   gl_FragColor = color + prev * 0.9;
   gl_FragColor = vec4(displacement, 0., 1.);
