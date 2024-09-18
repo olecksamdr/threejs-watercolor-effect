@@ -113,9 +113,11 @@ void main() {
 
   vec3 watercolor = blendDarken(prev.rgb, floodcolor * 1.05, 0.2);
   vec3 gradient = hsl2rgb(vec3(fract(uTime * 0.1), 0.5, 0.5));
+  vec3 lcolor = mix(vec3(1.), gradient, color.r);
 
   gl_FragColor = color + prev * 0.9;
   gl_FragColor = vec4(displacement, 0., 1.);
   gl_FragColor = vec4(watercolor, 1.);
   gl_FragColor = vec4(gradient, 1.);
+  gl_FragColor = vec4(lcolor, 1.);
 }
