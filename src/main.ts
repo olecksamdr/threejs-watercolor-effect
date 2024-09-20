@@ -2,6 +2,7 @@ import * as THREE from "three";
 
 // @ts-ignore
 import { OrbitControls } from "three/addons/controls/OrbitControls";
+// @ts-ignore
 import Stats from "three/examples/jsm/libs/stats.module";
 
 import fragment from "./shaders/fragment.glsl";
@@ -111,7 +112,7 @@ export class Sketch {
 
   constructor() {
     this.renderer.setClearColor(this.bgColor, 1);
-    this.renderer.setPixelRatio(Math.max(window.devicePixelRatio, 2));
+    this.renderer.setPixelRatio(Math.max(window.devicePixelRatio, 1));
 
     this.camera.position.set(0, 0, 1);
     this.fboCamera.position.set(0, 0, 1);
